@@ -4,7 +4,6 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
 }
 
 enum UserRole {
@@ -71,10 +70,10 @@ model Booking {
   doctor                DoctorProfile @relation(fields: [doctorId], references: [id])
   patientId             String
   patient               PatientProfile @relation(fields: [patientId], references: [id])
-  startTime             DateTime
-  endTime               DateTime
+  startTime             DateTime      @db.Timestamptz(3)
+  endTime               DateTime      @db.Timestamptz(3)
   status                BookingStatus @default(HELD)
-  heldUntil             DateTime?
+  heldUntil             DateTime?     @db.Timestamptz(3)
   googleCalendarEventId String?
   createdAt             DateTime      @default(now())
   updatedAt             DateTime      @updatedAt
@@ -100,9 +99,9 @@ model Job {
   payload        Json
   status         JobStatus @default(PENDING)
   attemptCount   Int       @default(0)
-  lockedAt       DateTime?
+  lockedAt       DateTime? @db.Timestamptz(3)
   workerId       String?
-  runAfter       DateTime  @default(now())
+  runAfter       DateTime  @default(now()) @db.Timestamptz(3)
   lastError      String?
   idempotencyKey String?   @unique
   createdAt      DateTime  @default(now())
