@@ -1,9 +1,14 @@
 {
   "name": "api",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "description": "Healthcare Appointment & Follow-up Workflow Engine API",
+  "type": "module",
+  "main": "dist/server.js",
   "scripts": {
+    "dev": "tsx watch src/server.ts",
+    "build": "tsc",
+    "start": "node dist/server.js",
+    "worker": "tsx watch src/workers/index.ts",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
