@@ -1,0 +1,120 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  ADMIN
+  DOCTOR
+  PATIENT
+}
+
+enum BookingStatus {
+  HELD
+  CONFIRMED
+  CANCELLED_DUE_TO_LEAVE
+  CANCELLED_BY_PATIENT
+  COMPLETED
+  EXPIRED
+}
+
+enum JobStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  DEAD_LETTER
+}
+
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  name      String
+  role      UserRole
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  doctorProfile  DoctorProfile?
+  patientProfile PatientProfile?
+}
+
+model DoctorProfile {
+  id             String   @id @default(uuid())
+  userId         String   @unique
+  user           User     @relation(fields: [userId], references: [id])
+  specialization String
+  workingHours   Json
+  slotDurationMinutes Int @default(30)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  bookings Booking[]
+  leaves   Leave[]
+}
+
+model PatientProfile {
+  id        String   @id @default(uuid())
+  userId    String   @unique
+  user      User     @relation(fields: [userId], references: [id])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  bookings Booking[]
+}
+
+model Booking {
+  id                    String        @id @default(uuid())
+  doctorId              String
+  doctor                DoctorProfile @relation(fields: [doctorId], references: [id])
+  patientId             String
+  patient               PatientProfile @relation(fields: [patientId], references: [id])
+  startTime             DateTime
+  endTime               DateTime
+  status                BookingStatus @default(HELD)
+  heldUntil             DateTime?
+  googleCalendarEventId String?
+  createdAt             DateTime      @default(now())
+  updatedAt             DateTime      @updatedAt
+
+  @@index([doctorId, startTime])
+}
+
+model Leave {
+  id        String   @id @default(uuid())
+  doctorId  String
+  doctor    DoctorProfile @relation(fields: [doctorId], references: [id])
+  startDate DateTime
+  endDate   DateTime
+  reason    String?
+  createdAt DateTime @default(now())
+
+  @@index([doctorId, startDate, endDate])
+}
+
+model Job {
+  id             String    @id @default(uuid())
+  type           String
+  payload        Json
+  status         JobStatus @default(PENDING)
+  attemptCount   Int       @default(0)
+  lockedAt       DateTime?
+  workerId       String?
+  runAfter       DateTime  @default(now())
+  lastError      String?
+  idempotencyKey String?   @unique
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+}
+
+model AuditLog {
+  id         String   @id @default(uuid())
+  actorId    String?
+  action     String
+  entityType String
+  entityId   String
+  metadata   Json?
+  createdAt  DateTime @default(now())
+}

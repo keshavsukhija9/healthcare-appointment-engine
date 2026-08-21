@@ -1,0 +1,15 @@
+{
+  "name": "healthcare-appointment-engine",
+  "private": true,
+  "version": "0.1.0",
+  "packageManager": "pnpm@9.15.0",
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "scripts": {
+    "dev:web": "pnpm --filter web dev",
+    "dev:api": "pnpm --filter api dev",
+    "build": "pnpm -r build",
+    "stress-test": "tsx scripts/stress-test.ts"
+  }
+}
