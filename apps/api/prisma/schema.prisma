@@ -117,3 +117,61 @@ model AuditLog {
   metadata   Json?
   createdAt  DateTime @default(now())
 }
+
+model SymptomForm {
+  id           String   @id @default(uuid())
+  bookingId    String   @unique
+  symptomText  String
+  createdAt    DateTime @default(now())
+
+  preVisitSummary PreVisitSummary?
+}
+
+model PreVisitSummary {
+  id                String   @id @default(uuid())
+  symptomFormId     String   @unique
+  symptomForm       SymptomForm @relation(fields: [symptomFormId], references: [id])
+  urgencyLevel      String
+  chiefComplaints   Json
+  suggestedQuestions Json
+  source            String
+  createdAt         DateTime @default(now())
+}
+
+model PostVisitNote {
+  id          String   @id @default(uuid())
+  bookingId   String   @unique
+  rawNotes    String
+  createdAt   DateTime @default(now())
+
+  postVisitSummary PostVisitSummary?
+}
+
+model PostVisitSummary {
+  id              String   @id @default(uuid())
+  postVisitNoteId String   @unique
+  postVisitNote   PostVisitNote @relation(fields: [postVisitNoteId], references: [id])
+  patientSummary  String
+  createdAt       DateTime @default(now())
+}
+
+model Medication {
+  id           String   @id @default(uuid())
+  bookingId    String
+  name         String
+  dosage       String
+  schedule     Json
+  createdAt    DateTime @default(now())
+}
+
+model OAuthToken {
+  id           String   @id @default(uuid())
+  doctorId     String
+  provider     String
+  accessToken  String
+  refreshToken String?
+  expiresAt    DateTime?
+  createdAt    DateTime @default(now())
+
+  @@unique([doctorId, provider])
+}
