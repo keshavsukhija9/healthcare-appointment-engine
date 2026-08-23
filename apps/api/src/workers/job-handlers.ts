@@ -10,6 +10,8 @@ export async function handleJob(type: string, payload: any): Promise<void> {
       return notifyCancelledLeave(payload);
     case 'REVOKE_CALENDAR_EVENT':
       return revokeCalendarEvent(payload);
+    case 'NOTIFY_POST_VISIT_SUMMARY':
+      return notifyPostVisitSummary(payload);
     case 'MEDICATION_REMINDER':
       return sendMedicationReminder(payload);
     default:
@@ -71,4 +73,18 @@ async function revokeCalendarEvent(payload: { bookingId: string }) {
 async function sendMedicationReminder(payload: { medicationId: string; scheduledAt: string }) {
   console.log(`[job] Would send medication reminder for ${payload.medicationId} at ${payload.scheduledAt}`);
   // Real implementation: Nodemailer/SendGrid + push notification dispatch.
+}
+
+async function notifyPostVisitSummary(payload: { bookingId: string }) {
+  const booking = await prisma.booking.findUnique({
+    where: { id: payload.bookingId },
+    include: { patient: { include: { user: true } } },
+  });
+
+  if (!booking) {
+    console.warn(`[job] Booking ${payload.bookingId} not found, skipping post-visit notification`);
+    return;
+  }
+
+  console.log(`[job] Would email post-visit summary to ${booking.patient.user.email}`);
 }
