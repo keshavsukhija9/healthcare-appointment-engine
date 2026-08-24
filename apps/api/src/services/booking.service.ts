@@ -2,6 +2,15 @@ import { prisma } from '../lib/prisma.js';
 import type { CreateBookingInput } from '../schemas/booking.schema.js';
 
 const EXCLUSION_VIOLATION = '23P01';
+
+function isExclusionViolation(err: any): boolean {
+  return (
+    err?.code === EXCLUSION_VIOLATION ||
+    err?.meta?.code === EXCLUSION_VIOLATION ||
+    err?.meta?.driverAdapterError?.cause?.code === EXCLUSION_VIOLATION ||
+    err?.meta?.driverAdapterError?.cause?.originalCode === EXCLUSION_VIOLATION
+  );
+}
 const HOLD_DURATION_MS = 5 * 60 * 1000; // 5 minutes
 
 export class SlotConflictError extends Error {
@@ -38,7 +47,7 @@ export async function acquireSlot(input: CreateBookingInput) {
       return booking;
     } catch (err: any) {
       // Postgres exclusion constraint violation
-      if (err?.meta?.code !== EXCLUSION_VIOLATION && err?.code !== EXCLUSION_VIOLATION) {
+      if (!isExclusionViolation(err)) {
         throw err;
       }
 
@@ -78,7 +87,7 @@ export async function acquireSlot(input: CreateBookingInput) {
         });
         return booking;
       } catch (retryErr: any) {
-        if (retryErr?.meta?.code !== EXCLUSION_VIOLATION && retryErr?.code !== EXCLUSION_VIOLATION) {
+        if (!isExclusionViolation(retryErr)) {
           throw retryErr;
         }
         await tx.$executeRawUnsafe('ROLLBACK TO SAVEPOINT slot_insert_retry');
