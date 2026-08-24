@@ -2,7 +2,7 @@ import Fastify from 'fastify';
 import { bookingRoutes } from './routes/bookings.js';
 import { leaveRoutes } from './routes/leaves.js';
 import { intakeRoutes } from './routes/intake.js';
-import { consultationRoutes } from './routes/consultation.js';
+import { postVisitRoutes } from './routes/post-visit.js';
 
 export function buildApp() {
   const app = Fastify({
@@ -17,7 +17,7 @@ export function buildApp() {
   app.register(bookingRoutes);
   app.register(leaveRoutes);
   app.register(intakeRoutes);
-  app.register(consultationRoutes);
+  app.register(postVisitRoutes);
 
   return app;
 }

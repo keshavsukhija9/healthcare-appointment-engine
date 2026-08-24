@@ -1,6 +1,7 @@
 import { llmCircuitBreaker } from '../lib/circuit-breaker.js';
 import { runFallbackTriage } from './triage-fallback.js';
 import { triageResultSchema, type TriageResult } from '../schemas/triage.schema.js';
+import { isChaosActive } from '../lib/chaos.js';
 
 const LLM_TIMEOUT_MS = 3500;
 
@@ -53,10 +54,16 @@ async function callOpenAI(symptomText: string): Promise<unknown> {
  * OpenAI Request -> 3.5s AbortController -> Process-Local Circuit Breaker
  * -> Zod Schema Validation -> Persistence
  *
- * Falls back to conservative keyword parser when the breaker is OPEN
- * or when the LLM response fails schema validation.
+ * Falls back to conservative keyword parser when the breaker is OPEN,
+ * chaos mode forces a timeout, or the LLM response fails validation.
  */
 export async function runTriage(symptomText: string): Promise<TriageResult> {
+  if (isChaosActive('llm_timeout')) {
+    console.log('[chaos] Forcing simulated LLM timeout');
+    llmCircuitBreaker.recordFailure();
+    return runFallbackTriage(symptomText);
+  }
+
   if (llmCircuitBreaker.isOpen()) {
     console.log('[triage] Circuit breaker OPEN, using fallback');
     return runFallbackTriage(symptomText);
